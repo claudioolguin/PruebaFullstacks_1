@@ -2,7 +2,7 @@
 
 Una aplicación web interactiva para simular enfrentamientos y estadísticas del fútbol chileno.
 
-## 📋 Descripción
+## 📋 Descripción 
 
 FUTBOL CHL es una aplicación web que permite simular partidos entre equipos de la Primera División del fútbol chileno, mostrando:
 

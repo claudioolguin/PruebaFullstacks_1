@@ -1,4 +1,4 @@
-*{box-sizing:border-box} /* Todos los elementos incluyen padding y borde dentro del ancho/alto total */
+*{box-sizing:border-box}  /* Todos los elementos incluyen padding y borde dentro del ancho/alto total */
 
 body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0f172a;color:#e5e7eb} /* Estilos base: reset margen, tipografías y esquema de colores oscuro */
 
