@@ -1,0 +1,31 @@
+*{box-sizing:border-box} /* Todos los elementos incluyen padding y borde dentro del ancho/alto total */
+
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0f172a;color:#e5e7eb} /* Estilos base: reset margen, tipografías y esquema de colores oscuro */
+
+.contenedor{max-width:940px;margin:0 auto;padding:66px} /* Centra contenido y limita ancho con relleno uniforme  es el rectangulo de fondo  */
+
+.subtitulo{color:#94a3b8;margin-top:0} /* Texto secundario más claro y sin margen superior */
+
+.tarjeta{background:#0e0c5c;border:1px solid #01fbff;border-radius:10px;padding:16px;margin-top:12px} /* Caja con fondo, borde y esquinas redondeadas */
+
+.rejilla-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end} /* Grid de 2 columnas con separación y alineación inferior */
+
+label{display:block;margin-bottom:6px;color:#cbd5e1} /* Etiquetas en bloque para alinear y espaciado inferior */
+
+select,button{padding:10px 12px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e5e7eb} /* Estilo compartido de controles (inputs y botón) */
+
+button{background:#4f46e5;border-color:#4f46e5;cursor:pointer;font-weight:600} /* Botón resalta con color y peso de fuente */
+
+button:hover{filter:brightness(1.1)} /* Feedback visual al pasar el cursor */
+
+table{width:100%;border-collapse:collapse} /* Tabla ocupa el ancho completo y colapsa bordes */
+
+th,td{padding:10px;border-bottom:1px solid #1f2937;text-align:left} /* Celdas con padding y línea divisoria inferior */
+
+small{color:#94a3b8} /* Texto auxiliar atenuado */
+
+.oculto{display:none} /* Clase utilitaria para ocultar elementos */
+
+.insignias span{display:inline-block;margin-right:10px;margin-bottom:6px;padding:.35rem .7rem;border-radius:999px;border:1px solid #334155;background:#0b1220} /* Chips redondeados para mostrar métricas */
+
+@media (max-width:760px){.rejilla-2{grid-template-columns:1fr}} /* En pantallas pequeñas la rejilla pasa a una sola columna */

@@ -1,0 +1,225 @@
+<!DOCTYPE html> <!-- Declaración de tipo de documento HTML5 -->
+<html lang="es"> <!-- Idioma principal del contenido: español -->
+
+<head>
+  <link rel="stylesheet" href="estilos.css" /> <!-- Enlace a la hoja de estilos principal -->
+
+  <meta charset="utf-8" /> <!-- Codificación UTF-8 para caracteres especiales -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" /> <!-- Hace que el layout sea responsive -->
+  <title>FUTBOL CHL</title> <!-- Título de la pestaña del navegador -->
+</head>
+
+<body> <!-- Comienzo del cuerpo visible -->
+
+  <header class="contenedor"> <!-- Encabezado con ancho máximo centrado rectangulo de fondo-->
+    <h1>FUTBOL CHL</h1> <!-- Título principal de la aplicación -->
+  </header>
+
+  <main class="contenedor tarjeta"> <!-- Contenedor principal con estilo tipo tarjeta -->
+
+    <form id="formulario-partido" class="rejilla-2"> <!-- Formulario con rejilla de 2 columnas -->
+
+      <div> <!-- Campo: equipo local -->
+        <label for="equipoLocal">Equipo 1</label> <!-- Etiqueta accesible para el select local -->
+        <select id="equipoLocal" required></select> <!-- Select que se llena dinámicamente -->
+      </div>
+
+      <div> <!-- Campo: equipo visita -->
+        <label for="equipoVisita">Equipo 2</label> <!-- Etiqueta accesible para el select visita -->
+        <select id="equipoVisita" required></select> <!-- Select que se llena dinámicamente -->
+      </div>
+
+      <div style="grid-column:1/-1;text-align:right"> <!-- Contenedor del botón ocupando el ancho completo -->
+        <button type="submit">Ver resultados</button> <!-- Envía el formulario y dispara la lógica -->
+      </div>
+
+    </form>
+  </main>
+
+  <section id="resultados" class="contenedor tarjeta oculto"> <!-- Sección de resultados inicialmente oculta-->
+
+    <h2 id="titulo-enfrentamiento"></h2> <!-- Aquí se mostrará 'Equipo A vs Equipo B' -->
+
+    <p class="subtitulo" id="subtitulo-enfrentamiento"></p> <!-- Subtítulo contextual -->
+
+    <h3>Probabilidades</h3> <!-- Encabezado de la subsección de probabilidades -->
+
+    <div class="insignias" id="probabilidades"></div> <!-- Contenedor dinámico de probabilidades -->
+
+    <h3>Goles y tarjetas esperadas</h3> <!-- Encabezado métricas de promedios -->
+
+    <div class="insignias" id="metricas"></div> <!-- Contenedor dinámico de métricas -->
+
+    <h3>Últimos 5 enfrentamientos </h3> <!-- Encabezado de la tabla de historial -->
+
+    <table> <!-- Tabla de resultados simulados -->
+      <thead> <!-- Encabezados de columnas -->
+        <tr> <!-- Fila de encabezados -->
+          <th>Fecha</th><th>Local</th><th></th><th>Visita</th><th>Amarillas</th><th>Rojas</th> <!-- Columnas mostradas -->
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody> <!-- Cuerpo dinámico de la tabla -->
+    </table>
+
+
+  </section>
+  <!-- JS embebido para cumplir “una carpeta con HTML y CSS” -->
+
+  <script>
+  // ========= Datos base (Primera División) =========
+  const EQUIPOS = [ // Arreglo estático de equipos con id y nombre
+    { id: 1,  nombre: "Colo-Colo" }, // Cada objeto representa un equipo
+    { id: 2,  nombre: "Universidad de Chile" },
+    { id: 3,  nombre: "Universidad Católica" },
+    { id: 4,  nombre: "Palestino" },
+    { id: 5,  nombre: "Unión Española" },
+    { id: 6,  nombre: "Audax Italiano" },
+    { id: 7,  nombre: "Ñublense" },
+    { id: 8,  nombre: "Cobresal" },
+    { id: 9,  nombre: "Everton" },
+    { id: 10, nombre: "Unión La Calera" },
+    { id: 11, nombre: "O'Higgins" },
+    { id: 12, nombre: "Huachipato" },
+    { id: 13, nombre: "Coquimbo Unido" },
+    { id: 14, nombre: "Cobreloa" },
+    { id: 15, nombre: "Deportes Iquique" },
+    { id: 16, nombre: "Deportes Copiapó" }
+  ];
+
+  // ========= Utilidades =========
+  function seleccionar(selector){ return document.querySelector(selector); } // Atajo para querySelector
+  function equipoPorId(id){ return EQUIPOS.find(e => e.id === id); } // Busca equipo por su id
+  function formatearFecha(iso){ return new Date(iso).toLocaleDateString('es-CL'); } // Convierte fecha ISO a formato local
+  function aPorcentaje(x){ return (x * 100).toFixed(0) + '%'; } // Convierte 0..1 a porcentaje entero
+
+  // ========= Poblar selects y validar =========
+  const selectLocal  = document.getElementById('equipoLocal'); // Referencia al select de equipo local
+  const selectVisita = document.getElementById('equipoVisita'); // Referencia al select de equipo visitante
+
+  function llenarSelect(select){ // Llena un <select> con las opciones de equipos
+    select.innerHTML = '<option value="">Selecciona…</option>' + // Opción inicial vacía
+      EQUIPOS.map(e => `<option value="${e.id}">${e.nombre}</option>`).join(''); // Genera cada <option>
+  }
+  llenarSelect(selectLocal); // Poblamos select local
+  llenarSelect(selectVisita); // Poblamos select visita
+
+  function validarDistintos(){ // Verifica que no se elijan equipos duplicados
+    if(selectLocal.value && selectLocal.value === selectVisita.value){ // Si ambos están seleccionados y son iguales
+      selectVisita.setCustomValidity('Elige equipos distintos'); // Mensaje de error (constraint validation API)
+    } else { // Caso válido
+      selectVisita.setCustomValidity(''); // Limpia el error
+    }
+  }
+  selectLocal.addEventListener('change', validarDistintos); // Revalida al cambiar local
+  selectVisita.addEventListener('change', validarDistintos); // Revalida al cambiar visita
+
+  // =========== Generar 5 partidos de demostración =======================================================
+  function generarPartidosDemostracion(idLocal, idVisita, cantidad = 5){ // Genera lista simulada de partidos
+    const partidos = []; // Acumulador
+    const ahora = Date.now(); // Marca temporal actual
+    for(let i = 0; i < cantidad; i++){ // Bucle de generación
+      const diasAtras = Math.floor(30 + Math.random() * 300); // Días aleatorios hacia atrás (~1 a 10 meses)
+      const fecha = new Date(ahora - diasAtras * 86400000).toISOString().slice(0,10); // Fecha YYYY-MM-DD
+
+      const golesLocal    = Math.floor(Math.random() * 4); // Goles local (0-3)
+      const golesVisita   = Math.floor(Math.random() * 4); // Goles visita (0-3)
+      const amarillasLoc  = Math.floor(Math.random() * 5); // Amarillas local (0-4)
+      const amarillasVis  = Math.floor(Math.random() * 5); // Amarillas visita (0-4)
+      const rojasLoc      = Math.random() < 0.08 ? 1 : 0; // Roja local ~8%
+      const rojasVis      = Math.random() < 0.08 ? 1 : 0; // Roja visita ~8%
+
+      partidos.push({ // Inserta partido generado
+        fecha,
+        local: idLocal,
+        visita: idVisita,
+        golesLocal,
+        golesVisita,
+        amarillasLocal: amarillasLoc,
+        amarillasVisita: amarillasVis,
+        rojasLocal: rojasLoc,
+        rojasVisita: rojasVis
+      });
+    }
+    partidos.sort((a,b) => b.fecha.localeCompare(a.fecha)); // Orden descendente por fecha
+    return partidos; // Devuelve el arreglo resultante
+  }
+
+  // ========= Flujo principal (submit) =========
+  document.getElementById('formulario-partido').addEventListener('submit', (evento) => { // Maneja el envío del formulario
+    evento.preventDefault(); // Evita recarga
+    validarDistintos(); // Asegura selección válida
+
+    const idLocal  = parseInt(selectLocal.value); // Id equipo local (número)
+    const idVisita = parseInt(selectVisita.value); // Id equipo visita (número)
+    if(!idLocal || !idVisita || idLocal === idVisita) return; // Aborta si falta o son iguales
+
+    const LOCAL  = equipoPorId(idLocal); // Objeto del equipo local
+    const VISITA = equipoPorId(idVisita); // Objeto del equipo visitante
+
+    seleccionar('#titulo-enfrentamiento').textContent    = `${LOCAL.nombre} vs ${VISITA.nombre}`; // Actualiza título dinámico
+
+    // 1) Partidos
+    const partidos = generarPartidosDemostracion(idLocal, idVisita, 5); // Genera 5 partidos simulados
+
+    // 2) Acumuladores
+    let victoriasLocal = 0, empates = 0, victoriasVisita = 0; // Contadores de resultados
+    let sumaGolesLocal = 0, sumaGolesVisita = 0, sumaAmarillas = 0, sumaRojas = 0; // Sumas para promedios
+
+    for(const p of partidos){ // Recorre cada partido
+      if(p.golesLocal === p.golesVisita)      empates++; // Empate
+      else if(p.golesLocal > p.golesVisita)   victoriasLocal++; // Victoria local
+      else                                    victoriasVisita++; // Victoria visita
+
+      sumaGolesLocal  += p.golesLocal; // Acumula goles local
+      sumaGolesVisita += p.golesVisita; // Acumula goles visita
+      sumaAmarillas   += (p.amarillasLocal + p.amarillasVisita); // Acumula amarillas totales
+      sumaRojas       += (p.rojasLocal + p.rojasVisita); // Acumula rojas totales
+    }
+
+    const numeroPartidos = partidos.length; // Cantidad de partidos generados
+
+    // 3) Porcentajes
+    const probLocal  = victoriasLocal  / numeroPartidos; // Prob. victoria local
+    const probEmpate = empates         / numeroPartidos; // Prob. empate
+    const probVisita = victoriasVisita / numeroPartidos; // Prob. victoria visita
+
+    // 4) Promedios esperados
+    const golesEsperadosLocal  = (sumaGolesLocal  / numeroPartidos).toFixed(2); // Promedio goles local
+    const golesEsperadosVisita = (sumaGolesVisita / numeroPartidos).toFixed(2); // Promedio goles visita
+    const amarillasEsperadas   = (sumaAmarillas   / numeroPartidos).toFixed(2); // Promedio amarillas
+    const rojasEsperadas       = (sumaRojas       / numeroPartidos).toFixed(2); // Promedio rojas
+
+    // 5) Render probabilidades
+    seleccionar('#probabilidades').innerHTML = `
+      <span>Local ${aPorcentaje(probLocal)}</span>
+      <span>Empate ${aPorcentaje(probEmpate)}</span>
+      <span>Visita ${aPorcentaje(probVisita)}</span>
+    `; // Inserta spans con porcentajes calculados
+
+    // 6) Render métricas
+    seleccionar('#metricas').innerHTML = `
+      <span>${LOCAL.nombre}: ${golesEsperadosLocal} gol(es)</span>
+      <span>${VISITA.nombre}: ${golesEsperadosVisita} gol(es)</span>
+      <span>Amarillas: ${amarillasEsperadas}</span>
+      <span>Rojas: ${rojasEsperadas}</span>
+    `; // Inserta promedios
+
+    // 7) Render tabla
+    seleccionar('#cuerpo-tabla').innerHTML = partidos.map(p => `
+      <tr>
+        <td>${formatearFecha(p.fecha)}</td> <!-- Fecha formateada -->
+        <td>${LOCAL.nombre}</td> <!-- Equipo local -->
+        <td><strong>${p.golesLocal} - ${p.golesVisita}</strong></td> <!-- Marcador -->
+        <td>${VISITA.nombre}</td> <!-- Equipo visita -->
+        <td>${p.amarillasLocal + p.amarillasVisita}</td> <!-- Total amarillas -->
+        <td>${p.rojasLocal + p.rojasVisita}</td> <!-- Total rojas -->
+      </tr>
+    `).join(''); // Genera todas las filas y las une en un string
+
+    // 8) Mostrar resultados
+    seleccionar('#resultados').classList.remove('oculto'); // Hace visible la sección resultados
+    window.scrollTo({ top: seleccionar('#resultados').offsetTop - 10, behavior: 'smooth' }); // Scroll suave a la sección
+  });
+  </script>
+</body> <!-- Fin del cuerpo -->
+</html> <!-- Fin del documento -->
